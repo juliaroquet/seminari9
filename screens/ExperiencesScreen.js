@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
-import { useFocusEffect } from "@react-navigation/native"; 
+import { useFocusEffect } from "@react-navigation/native";
 import ExperienceForm from "../components/ExperienceForm";
 import ExperienceList from "../components/ExperienceList";
+import SearchExperience from "../components/SearchExperience"; // Nuevo componente
 import {
   fetchExperiences,
   deleteExperience,
 } from "../services/experienceService";
-import { fetchUsers } from "../services/userService"; 
+import { fetchUsers } from "../services/userService";
 
 export default function ExperiencesScreen() {
   const [experiences, setExperiences] = useState([]);
-  const [users, setUsers] = useState([]); 
+  const [filteredExperiences, setFilteredExperiences] = useState([]); // Para mostrar resultados filtrados
+  const [users, setUsers] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Función para cargar las experiencias y los usuarios
   const loadExperiencesAndUsers = async () => {
     try {
       const [experiencesData, usersData] = await Promise.all([
@@ -22,16 +23,16 @@ export default function ExperiencesScreen() {
         fetchUsers(),
       ]);
       setExperiences(experiencesData);
+      setFilteredExperiences(experiencesData); // Inicialmente, mostramos todas las experiencias
       setUsers(usersData);
     } catch (error) {
       console.error("Error al cargar experiencias y usuarios:", error);
     }
   };
 
-  // Usamos useFocusEffect para recargar las experiencias y usuarios cada vez que la pantalla se enfoca
   useFocusEffect(
     React.useCallback(() => {
-      loadExperiencesAndUsers(); // Cargamos las experiencias y usuarios al enfocar la pantalla
+      loadExperiencesAndUsers();
     }, [])
   );
 
@@ -46,18 +47,34 @@ export default function ExperiencesScreen() {
       setExperiences((prevExperiences) =>
         prevExperiences.filter((exp) => exp._id !== experienceId)
       );
+      setFilteredExperiences((prevExperiences) =>
+        prevExperiences.filter((exp) => exp._id !== experienceId)
+      );
     } catch (error) {
       console.error("Error al eliminar experiencia:", error);
     }
+  };
+
+  const handleSearch = (searchQuery) => {
+    const query = searchQuery.toLowerCase();
+    const results = experiences.filter((exp) => {
+      const userName = getUserNameById(exp.userId).toLowerCase();
+      return userName.includes(query);
+    });
+    setFilteredExperiences(results);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Lista de Experiencias</Text>
 
+      {/* Componente de búsqueda */}
+      <SearchExperience onSearch={handleSearch} />
+
+      {/* Lista de experiencias filtradas */}
       <ExperienceList
-        experiences={experiences}
-        getUserNameById={getUserNameById} // Pasamos la función para obtener los nombres
+        experiences={filteredExperiences}
+        getUserNameById={getUserNameById}
         onDeleteExperience={handleDeleteExperience}
       />
 
@@ -79,7 +96,7 @@ export default function ExperiencesScreen() {
             <ExperienceForm
               onExperienceAdded={() => {
                 setModalVisible(false);
-                loadExperiencesAndUsers(); // Actualizar la lista de experiencias
+                loadExperiencesAndUsers();
               }}
             />
             <TouchableOpacity
