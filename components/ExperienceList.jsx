@@ -41,8 +41,15 @@ export default function ExperienceList({
           </TouchableOpacity>
         </View>
       )}
+      ListEmptyComponent={
+        <Text style={styles.emptyMessage}>
+          No hay experiencias disponibles.
+        </Text>
+      }
       style={styles.list}
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={
+        experiences.length === 0 ? styles.emptyContainer : { paddingBottom: 20 }
+      }
     />
   );
 }
@@ -80,5 +87,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     textAlign: "center",
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 20,
+  },
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
